@@ -1,0 +1,9 @@
+Contexto: plugin de WordPress "Suite Ambiente Nariño" (PHP 7.4+, JavaScript sin build).
+Revisa con especial atención:
+1. Rutas REST (register_rest_route) sin permission_callback real cuando exponen configuración, logs o acciones de escritura.
+2. Manejadores admin-post / AJAX sin current_user_can('manage_options') y sin verificación de nonce.
+3. Consultas $wpdb armadas por concatenación en lugar de $wpdb->prepare().
+4. Salida sin escapar (esc_html, esc_attr, esc_url, wp_kses_post), incluidos atributos de shortcode y textos que vienen de APIs externas.
+5. SSRF: hosts o esquemas controlados por el usuario que lleguen a wp_remote_get. Las URL base solo pueden venir del registro interno de fuentes.
+6. Claves de API (NASA FIRMS, OpenAQ, etc.) expuestas al front, en respuestas REST o en logs en texto plano.
+7. Identificadores de visualización, recurso o municipio que no se validen contra una lista blanca.

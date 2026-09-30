@@ -1,0 +1,549 @@
+/*
+ * Suite Ambiente Nariño — estilos del front.
+ *
+ * Identidad: Manual de Identidad Visual (MIV) de la Gobernación de Nariño
+ * (jun. 2024) y Manual de Usabilidad de Sitios Web (mar. 2025):
+ *   verde institucional #10A13B · amarillo #FFD500 · azul #003366
+ *   texto #4A4A4A · Hind Madurai (títulos) · Nunito Sans (etiquetas).
+ * Los colores de datos se definen como tokens y cambian en modo oscuro.
+ */
+
+.san-grafico,
+.san-card,
+.san-tablero,
+.san-descripcion,
+.san-analisis,
+.san-datos,
+.san-catalogo-datos,
+.san-estado {
+	--san-verde: #10a13b;
+	--san-verde-texto: #0b7a2c;
+	--san-amarillo: #ffd500;
+	--san-azul: #003366;
+	--san-superficie: #ffffff;
+	--san-plano: #f6f7f5;
+	--san-tinta: #1f1f1f;
+	--san-tinta-2: #4a4a4a;
+	--san-tinta-3: #6b6b6b;
+	--san-linea: #e1e3de;
+	--san-eje: #c3c6bf;
+	--san-foco: #003366;
+	--san-radio: 12px;
+	--san-sombra: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .04);
+	--san-fuente-titulo: "Hind Madurai", "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+	--san-fuente-texto: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+	color: var(--san-tinta-2);
+	font-family: var(--san-fuente-texto);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+/* Modo oscuro: por preferencia del sistema salvo que se fuerce "claro". */
+@media (prefers-color-scheme: dark) {
+	:where(.san-grafico, .san-card, .san-tablero, .san-descripcion, .san-analisis, .san-datos, .san-catalogo-datos, .san-estado):not(.san-tema-claro):not(.san-tema-claro *) {
+		--san-superficie: #1a1a19;
+		--san-plano: #121211;
+		--san-tinta: #ffffff;
+		--san-tinta-2: #d9d8d0;
+		--san-tinta-3: #a8a79f;
+		--san-linea: #2f2f2c;
+		--san-eje: #4a4a46;
+		--san-verde-texto: #3fc463;
+		--san-foco: #ffd500;
+	}
+}
+
+.san-tema-oscuro,
+.san-tema-oscuro :where(.san-grafico, .san-descripcion, .san-analisis) {
+	--san-superficie: #1a1a19;
+	--san-plano: #121211;
+	--san-tinta: #ffffff;
+	--san-tinta-2: #d9d8d0;
+	--san-tinta-3: #a8a79f;
+	--san-linea: #2f2f2c;
+	--san-eje: #4a4a46;
+	--san-verde-texto: #3fc463;
+	--san-foco: #ffd500;
+}
+
+/* ---------- Tarjeta ---------- */
+.san-card {
+	background: var(--san-superficie);
+	border: 1px solid var(--san-linea);
+	border-radius: var(--san-radio);
+	box-shadow: var(--san-sombra);
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px;
+	min-width: 0;
+}
+
+.san-card__cabecera {
+	border-left: 4px solid var(--san-verde);
+	padding-left: 12px;
+}
+
+.san-card__antetitulo {
+	color: var(--san-verde-texto);
+	font-family: var(--san-fuente-texto);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: .02em;
+	margin: 0 0 2px;
+	text-transform: uppercase;
+}
+
+.san-card__titulo {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: clamp(20px, 2.2vw, 26px);
+	font-weight: 700;
+	line-height: 1.2;
+	margin: 0;
+}
+
+.san-card__seccion > summary {
+	color: var(--san-tinta);
+	cursor: pointer;
+	font-family: var(--san-fuente-titulo);
+	font-size: 18px;
+	font-weight: 700;
+	min-height: 32px;
+}
+
+.san-card__analisis {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.san-card__analisis h4 {
+	border-bottom: 2px solid var(--san-verde);
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: 18px;
+	margin: 0 0 8px;
+	padding-bottom: 4px;
+}
+
+/* ---------- Gráfico ---------- */
+.san-grafico {
+	margin: 0;
+	min-width: 0;
+}
+
+.san-grafico__cap {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: 20px;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.san-grafico__barra {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.san-grafico__barra:empty {
+	display: none;
+}
+
+.san-grafico__barra label {
+	color: var(--san-tinta-3);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.san-grafico__barra select,
+.san-boton {
+	background: var(--san-superficie);
+	border: 1px solid var(--san-eje);
+	border-radius: 8px;
+	color: var(--san-tinta);
+	font: 600 14px/1.2 var(--san-fuente-texto);
+	min-height: 36px;
+	padding: 6px 12px;
+}
+
+.san-boton {
+	align-items: center;
+	cursor: pointer;
+	display: inline-flex;
+	gap: 6px;
+	text-decoration: none;
+}
+
+.san-boton:hover {
+	border-color: var(--san-verde);
+	color: var(--san-verde-texto);
+}
+
+.san-grafico__barra select:focus-visible,
+.san-boton:focus-visible,
+.san-card__seccion > summary:focus-visible {
+	outline: 3px solid var(--san-foco);
+	outline-offset: 2px;
+}
+
+.san-grafico__barra .san-espaciador {
+	flex: 1;
+}
+
+.san-grafico__barra .san-descargas {
+	display: inline-flex;
+	gap: 6px;
+}
+
+.san-grafico__lienzo {
+	height: var(--san-alto, 420px);
+	min-height: 200px;
+	position: relative;
+	width: 100%;
+}
+
+.san-grafico__lienzo > svg {
+	display: block;
+	max-width: 100%;
+}
+
+.san-grafico__pie {
+	color: var(--san-tinta-3);
+	font-size: 13px;
+	margin: 8px 0 0;
+}
+
+.san-grafico__pie:empty {
+	display: none;
+}
+
+.san-cargando {
+	align-items: center;
+	background: var(--san-plano);
+	border-radius: 8px;
+	display: flex;
+	height: 100%;
+	justify-content: center;
+	overflow: hidden;
+	position: relative;
+}
+
+.san-cargando__barra {
+	animation: san-barrido 1.4s ease-in-out infinite;
+	background: linear-gradient(90deg, transparent, rgba(16, 161, 59, .18), transparent);
+	inset: 0;
+	position: absolute;
+}
+
+@keyframes san-barrido {
+	from { transform: translateX(-100%); }
+	to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.san-cargando__barra { animation: none; }
+}
+
+.san-error {
+	align-items: center;
+	background: var(--san-plano);
+	border: 1px dashed var(--san-eje);
+	border-radius: 8px;
+	color: var(--san-tinta-2);
+	display: flex;
+	height: 100%;
+	justify-content: center;
+	padding: 16px;
+	text-align: center;
+}
+
+/* Tabla de datos del gráfico (botón "Tabla") */
+.san-tabla-datos {
+	border: 1px solid var(--san-linea);
+	border-radius: 8px;
+	margin-top: 8px;
+	max-height: 320px;
+	overflow: auto;
+}
+
+.san-tabla-datos:focus-visible {
+	outline: 3px solid var(--san-foco);
+}
+
+.san-tabla-datos table {
+	border-collapse: collapse;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+	width: 100%;
+}
+
+.san-tabla-datos caption {
+	color: var(--san-tinta);
+	font-weight: 700;
+	padding: 8px;
+	text-align: left;
+}
+
+.san-tabla-datos th,
+.san-tabla-datos td {
+	border-bottom: 1px solid var(--san-linea);
+	padding: 4px 8px;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.san-tabla-datos th {
+	background: var(--san-plano);
+	color: var(--san-tinta);
+	position: sticky;
+	text-transform: capitalize;
+	top: 0;
+}
+
+.san-boton[aria-pressed="true"] {
+	border-color: var(--san-verde);
+	box-shadow: inset 0 0 0 1px var(--san-verde);
+}
+
+/* Tooltip de los gráficos D3 propios */
+.san-tooltip {
+	background: var(--san-superficie, #fff);
+	border: 1px solid var(--san-linea, #e1e3de);
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+	color: var(--san-tinta, #1f1f1f);
+	font: 14px/1.4 var(--san-fuente-texto, system-ui, sans-serif);
+	max-width: 280px;
+	padding: 8px 10px;
+	pointer-events: none;
+	position: fixed;
+	z-index: 100000;
+}
+
+.san-tooltip strong {
+	display: block;
+	font-family: var(--san-fuente-titulo, system-ui, sans-serif);
+}
+
+.san-leyenda {
+	color: var(--san-tinta-2);
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 13px;
+	gap: 6px 14px;
+	margin-top: 6px;
+}
+
+.san-leyenda__item {
+	align-items: center;
+	display: inline-flex;
+	gap: 6px;
+}
+
+.san-leyenda__muestra {
+	border-radius: 3px;
+	display: inline-block;
+	height: 12px;
+	width: 12px;
+}
+
+/* ---------- Descripción y análisis ---------- */
+.san-descripcion p,
+.san-analisis p {
+	margin: 0 0 10px;
+}
+
+.san-descripcion__fuente,
+.san-actualizado,
+.san-muted,
+.san-analisis__metodo {
+	color: var(--san-tinta-3);
+	font-size: 13px;
+}
+
+.san-descripcion a {
+	color: var(--san-verde-texto);
+}
+
+.san-insignia {
+	align-items: center;
+	border: 1px solid var(--san-insignia, #2b93d2);
+	border-radius: 999px;
+	color: var(--san-tinta);
+	display: inline-flex;
+	font-size: 13px;
+	font-weight: 700;
+	gap: 6px;
+	margin: 0 0 8px;
+	padding: 2px 10px;
+}
+
+.san-insignia > span[aria-hidden] {
+	color: var(--san-insignia, #2b93d2);
+}
+
+.san-analisis__titular {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.san-analisis__sub {
+	color: var(--san-tinta);
+	font-weight: 700;
+}
+
+.san-analisis ul {
+	margin: 0 0 10px 1.2em;
+	padding: 0;
+}
+
+.san-cifras {
+	display: grid;
+	gap: 8px;
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	margin: 0 0 10px;
+}
+
+.san-cifra {
+	background: var(--san-plano);
+	border-radius: 8px;
+	padding: 8px 10px;
+}
+
+.san-cifra dt {
+	color: var(--san-tinta-3);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: .02em;
+	text-transform: uppercase;
+}
+
+.san-cifra dd {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: 20px;
+	font-weight: 700;
+	margin: 0;
+}
+
+.san-cifra dd.san-cifra__detalle {
+	color: var(--san-tinta-3);
+	font-family: var(--san-fuente-texto);
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.san-vencido {
+	color: #a15c00;
+	font-weight: 700;
+}
+
+/* ---------- Tablero ---------- */
+.san-tablero__titulo {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: clamp(28px, 3vw, 36px);
+	margin: 0 0 16px;
+}
+
+.san-tablero__rejilla {
+	display: grid;
+	gap: 20px;
+	grid-template-columns: repeat(var(--san-columnas, 2), minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+	.san-tablero__rejilla { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Datos abiertos y estado ---------- */
+.san-datos {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.san-datos__texto {
+	color: var(--san-tinta);
+	font-weight: 600;
+}
+
+.san-tabla {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.san-tabla caption {
+	color: var(--san-tinta);
+	font-family: var(--san-fuente-titulo);
+	font-size: 20px;
+	font-weight: 700;
+	padding-bottom: 8px;
+	text-align: left;
+}
+
+.san-tabla th,
+.san-tabla td {
+	border-bottom: 1px solid var(--san-linea);
+	padding: 10px 8px;
+	text-align: left;
+	vertical-align: top;
+}
+
+.san-tabla th {
+	color: var(--san-tinta);
+	font-size: 13px;
+	text-transform: uppercase;
+}
+
+.san-estado__lista {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.san-estado__lista li {
+	border-bottom: 1px solid var(--san-linea);
+	padding: 8px 0;
+}
+
+.san-aviso {
+	background: #fff8d6;
+	border-left: 4px solid var(--san-amarillo, #ffd500);
+	color: #3d3200;
+	padding: 8px 12px;
+}
+
+/* Controles de D3plus v4 (zoom, búsqueda, tabla): hereda la identidad. */
+.san-grafico .d3plus-zoom-control button,
+.san-grafico .table-view-control,
+.san-grafico .search-control {
+	border-radius: 6px;
+}
+
+.san-grafico .screen-reader-text,
+.san-card .screen-reader-text {
+	border: 0;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+	word-wrap: normal;
+}
+
+@media print {
+	.san-grafico__barra { display: none; }
+	.san-card { box-shadow: none; break-inside: avoid; }
+}

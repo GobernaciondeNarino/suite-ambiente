@@ -1,0 +1,19 @@
+# Dependencias de desarrollo
+node_modules/
+
+# Salidas regenerables de herramientas
+repomix-output.xml
+repomix-plugin.xml
+graphify-out/
+/.claude/plugins/cache/
+.claude/settings.local.json
+
+# Empaquetados
+*.zip
+/dist/
+
+# Cruft de SO / editores
+.DS_Store
+Thumbs.db
+*.swp
+*~

@@ -1,0 +1,20 @@
+{
+  "name": "suite-ambiente",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Herramientas de desarrollo del plugin Suite Ambiente Nariño (el plugin no requiere build).",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "pack:ai": "repomix",
+    "pack:plugin": "repomix --include \"suite-ambiente-narino/**\" --output repomix-plugin.xml",
+    "lint:php": "find suite-ambiente-narino tests -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "test:php": "php tests/run.php",
+    "test:e2e": "node tests/e2e/navegador.mjs",
+    "test:admin": "node tests/e2e/admin.mjs",
+    "test": "npm run lint:php && npm run test:php",
+    "graph": "graphify update ."
+  },
+  "devDependencies": {
+    "repomix": "^1.18.1"
+  }
+}
