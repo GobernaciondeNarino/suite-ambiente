@@ -401,6 +401,76 @@
 	font-size: 20px;
 }
 
+/* Cupo de Open-Meteo */
+.san-consumo h2 {
+	margin: 0 0 4px;
+}
+
+.san-consumo__medidores {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	margin: 12px 0 8px;
+}
+
+.san-consumo__fila {
+	--san-nivel: #0ca30c;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.san-consumo__fila--advertencia { --san-nivel: #c98a00; }
+.san-consumo__fila--alerta { --san-nivel: #d03b3b; }
+
+.san-consumo__cabecera {
+	align-items: baseline;
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.san-consumo__etiqueta {
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.san-consumo__estado {
+	color: #50575e;
+	font-size: 12px;
+}
+
+.san-consumo__estado::before {
+	background: var(--san-nivel);
+	border-radius: 50%;
+	content: "";
+	display: inline-block;
+	height: 8px;
+	margin-right: 6px;
+	width: 8px;
+}
+
+.san-consumo__barra {
+	background: var(--san-suave);
+	border: 1px solid var(--san-borde);
+	border-radius: 999px;
+	height: 10px;
+	overflow: hidden;
+}
+
+.san-consumo__barra span {
+	background: var(--san-nivel);
+	border-radius: 999px;
+	display: block;
+	height: 100%;
+	min-width: 2px;
+}
+
+.san-consumo__cifras {
+	color: #50575e;
+	font-variant-numeric: tabular-nums;
+}
+
 /* Selección del tablero */
 .san-seleccion {
 	display: grid;

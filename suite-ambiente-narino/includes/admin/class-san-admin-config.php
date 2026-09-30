@@ -67,6 +67,65 @@ final class SAN_Admin_Config {
 	 * ---------------------------------------------------------------- */
 
 	/**
+	 * Aviso si la sincronización programada no se está ejecutando.
+	 */
+	private static function aviso_sincronizacion() {
+		$ultima = SAN_Cron::ultima_sincronizacion();
+		$horas  = $ultima ? ( time() - $ultima ) / HOUR_IN_SECONDS : null;
+		if ( null !== $horas && $horas < 2 ) {
+			return;
+		}
+		$desactivado = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON;
+		$cuando      = $ultima
+			? sprintf( /* translators: %s: tiempo transcurrido */ __( 'La última sincronización fue hace %s.', 'suite-ambiente-narino' ), human_time_diff( $ultima ) )
+			: __( 'Todavía no se ha registrado ninguna sincronización.', 'suite-ambiente-narino' );
+		$consejo     = $desactivado
+			? __( 'WP-Cron está desactivado (DISABLE_WP_CRON): verifique la tarea del cron del servidor, por ejemplo «wp suite-ambiente sincronizar» cada hora.', 'suite-ambiente-narino' )
+			: __( 'WP-Cron solo se ejecuta cuando alguien visita el sitio. En producción conviene llamarlo desde el cron del servidor (vea docs/despliegue.md).', 'suite-ambiente-narino' );
+		echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Sincronización atrasada.', 'suite-ambiente-narino' ) . '</strong> ' . esc_html( $cuando . ' ' . $consejo ) . '</p></div>';
+	}
+
+	/**
+	 * Medidores del cupo gratuito de Open-Meteo.
+	 */
+	private static function consumo_openmeteo() {
+		$c       = SAN_Consumo::resumen();
+		$filas   = array(
+			array( __( 'Última hora', 'suite-ambiente-narino' ), $c['hora'], $c['limites']['hora'], $c['pct_hora'] ),
+			array( __( 'Hoy (UTC)', 'suite-ambiente-narino' ), $c['dia'], $c['limites']['dia'], $c['pct_dia'] ),
+			array( __( 'Últimos 30 días', 'suite-ambiente-narino' ), $c['mes'], $c['limites']['mes'], $c['pct_mes'] ),
+		);
+		echo '<section class="san-panel san-consumo" aria-labelledby="san-consumo-titulo">';
+		echo '<h2 id="san-consumo-titulo">' . esc_html__( 'Cupo gratuito de Open-Meteo', 'suite-ambiente-narino' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Llamadas equivalentes según las reglas de Open-Meteo: cada coordenada cuenta como una; más de 10 variables o más de 2 semanas cuentan como varias. Solo incluye las consultas de este plugin.', 'suite-ambiente-narino' ) . '</p>';
+		echo '<div class="san-consumo__medidores">';
+		foreach ( $filas as $f ) {
+			$pct   = min( 100, (float) $f[3] );
+			$nivel = $f[3] >= 90 ? 'alerta' : ( $f[3] >= 70 ? 'advertencia' : 'bueno' );
+			$texto = 'alerta' === $nivel ? __( 'Cerca del límite', 'suite-ambiente-narino' ) : ( 'advertencia' === $nivel ? __( 'Consumo alto', 'suite-ambiente-narino' ) : __( 'Holgado', 'suite-ambiente-narino' ) );
+			echo '<div class="san-consumo__fila san-consumo__fila--' . esc_attr( $nivel ) . '">';
+			echo '<div class="san-consumo__cabecera"><span class="san-consumo__etiqueta">' . esc_html( $f[0] ) . '</span><span class="san-consumo__estado">' . esc_html( $texto ) . '</span></div>';
+			echo '<div class="san-consumo__barra" role="meter" aria-label="' . esc_attr( $f[0] ) . '" aria-valuemin="0" aria-valuemax="' . esc_attr( $f[2] ) . '" aria-valuenow="' . esc_attr( round( $f[1] ) ) . '"><span style="width:' . esc_attr( $pct ) . '%"></span></div>';
+			echo '<div class="san-consumo__cifras">' . esc_html( sprintf( /* translators: 1: usado, 2: límite, 3: porcentaje */ __( '%1$s de %2$s (%3$s %%)', 'suite-ambiente-narino' ), SAN_Analisis::num( (float) $f[1], 0 ), SAN_Analisis::num( (float) $f[2], 0 ), SAN_Analisis::num( (float) $f[3], 1 ) ) ) . '</div>';
+			echo '</div>';
+		}
+		echo '</div>';
+		$extra = array();
+		$extra[] = sprintf( /* translators: %d: peticiones */ __( '%d peticiones hoy', 'suite-ambiente-narino' ), (int) $c['peticiones'] );
+		if ( null !== $c['promedio_7d'] ) {
+			$extra[] = sprintf( /* translators: %s: llamadas */ __( 'promedio de los 7 días anteriores: %s llamadas/día', 'suite-ambiente-narino' ), SAN_Analisis::num( (float) $c['promedio_7d'], 0 ) );
+		}
+		if ( $c['rechazos'] ) {
+			$extra[] = sprintf( /* translators: %d: respuestas 429 */ __( '%d respuestas «límite superado» (HTTP 429) hoy', 'suite-ambiente-narino' ), (int) $c['rechazos'] );
+		}
+		if ( $c['desde'] ) {
+			$extra[] = sprintf( /* translators: %s: fecha */ __( 'medición desde %s UTC', 'suite-ambiente-narino' ), $c['desde'] );
+		}
+		echo '<p class="san-muted">' . esc_html( implode( ' · ', $extra ) ) . '</p>';
+		echo '</section>';
+	}
+
+	/**
 	 * Pestaña Tablero.
 	 */
 	private static function tablero() {
@@ -94,12 +153,17 @@ final class SAN_Admin_Config {
 			array( __( 'Errores (24 h)', 'suite-ambiente-narino' ), (string) $logs['error'], $logs['error'] ? 'alerta' : 'bueno' ),
 			array( __( 'Advertencias (24 h)', 'suite-ambiente-narino' ), (string) $logs['advertencia'], '' ),
 			array( __( 'Entradas en caché', 'suite-ambiente-narino' ), (string) $entr, '' ),
-			array( __( 'Próxima sincronización', 'suite-ambiente-narino' ), $proxima ? wp_date( 'H:i', $proxima ) : '—', '' ),
+			$proxima && $proxima < time() - 10 * MINUTE_IN_SECONDS
+				? array( __( 'Próxima sincronización', 'suite-ambiente-narino' ), __( 'Atrasada', 'suite-ambiente-narino' ), 'advertencia' )
+				: array( __( 'Próxima sincronización', 'suite-ambiente-narino' ), $proxima ? wp_date( 'H:i', $proxima ) : '—', '' ),
 		);
 		foreach ( $kpis as $k ) {
 			echo '<div class="san-kpi' . ( $k[2] ? ' san-kpi--' . esc_attr( $k[2] ) : '' ) . '"><span class="san-kpi__etiqueta">' . esc_html( $k[0] ) . '</span><span class="san-kpi__valor">' . esc_html( $k[1] ) . '</span></div>';
 		}
 		echo '</section>';
+
+		self::aviso_sincronizacion();
+		self::consumo_openmeteo();
 
 		$t = SAN_Ajustes::get( 'tablero' );
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="san-panel">';
@@ -215,13 +279,19 @@ final class SAN_Admin_Config {
 
 		if ( $f->admite_clave() ) {
 			$mask = SAN_Seguridad::enmascarar( (string) $cfg['clave'] );
-			echo '<label class="san-campo-ancho">' . esc_html( $f->requiere_clave() ? __( 'Clave de API', 'suite-ambiente-narino' ) : __( 'Clave de API (opcional)', 'suite-ambiente-narino' ) ) . ' <input type="password" autocomplete="new-password" name="' . esc_attr( $n ) . '[clave]" placeholder="' . esc_attr( $mask ? sprintf( /* translators: %s: clave enmascarada */ __( 'Guardada: %s (deje vacío para conservarla)', 'suite-ambiente-narino' ), $mask ) : __( 'Pegue aquí la clave', 'suite-ambiente-narino' ) ) . '"></label>';
+			$txt  = $f->texto_clave();
+			echo '<label class="san-campo-ancho">' . esc_html( $txt['etiqueta'] ) . ' <input type="password" autocomplete="new-password" name="' . esc_attr( $n ) . '[clave]" placeholder="' . esc_attr( $mask ? sprintf( /* translators: %s: clave enmascarada */ __( 'Guardada: %s (deje vacío para conservarla)', 'suite-ambiente-narino' ), $mask ) : __( 'Pegue aquí la clave', 'suite-ambiente-narino' ) ) . '"></label>';
 			if ( $mask ) {
 				echo '<label><input type="checkbox" name="' . esc_attr( $n ) . '[borrar_clave]" value="1"> ' . esc_html__( 'Borrar clave', 'suite-ambiente-narino' ) . '</label>';
 			}
-			if ( $f->url_clave() ) {
-				echo '<p class="description san-campo-ancho"><a href="' . esc_url( $f->url_clave() ) . '" target="_blank" rel="noopener">' . esc_html__( 'Obtener una clave gratuita', 'suite-ambiente-narino' ) . '</a> · ' . esc_html__( 'Se guarda cifrada (AES-256-GCM) y nunca se envía al navegador.', 'suite-ambiente-narino' ) . '</p>';
+			echo '<p class="description san-campo-ancho">';
+			if ( '' !== $txt['ayuda'] ) {
+				echo esc_html( $txt['ayuda'] ) . ' ';
 			}
+			if ( $f->url_clave() ) {
+				echo '<a href="' . esc_url( $f->url_clave() ) . '" target="_blank" rel="noopener">' . esc_html( $txt['enlace'] ) . '</a> · ';
+			}
+			echo esc_html__( 'Se guarda cifrada (AES-256-GCM) y nunca se envía al navegador.', 'suite-ambiente-narino' ) . '</p>';
 		}
 
 		foreach ( $f->campos_params() as $k => $c ) {
@@ -250,6 +320,10 @@ final class SAN_Admin_Config {
 		echo '<button type="button" class="button san-vaciar-fuente" data-fuente="' . esc_attr( $id ) . '">' . esc_html__( 'Vaciar caché', 'suite-ambiente-narino' ) . '</button>';
 		if ( $cache ) {
 			echo ' <span class="san-muted">' . esc_html( sprintf( /* translators: 1: entradas, 2: vigentes, 3: tamaño */ __( 'Caché: %1$d entradas (%2$d vigentes) · %3$s', 'suite-ambiente-narino' ), (int) $cache['entradas'], (int) $cache['vigentes'], size_format( (int) $cache['bytes'] ) ) ) . '</span>';
+		}
+		if ( $f instanceof SAN_Fuente_Openmeteo ) {
+			$consumo = SAN_Consumo::resumen();
+			echo ' <span class="san-muted">' . esc_html( sprintf( /* translators: %s: llamadas */ __( 'Cupo de Open-Meteo usado hoy por esta fuente: %s llamadas', 'suite-ambiente-narino' ), SAN_Analisis::num( (float) ( $consumo['fuentes'][ $id ] ?? 0 ), 0 ) ) ) . '</span>';
 		}
 		echo '</div><div class="san-resultado-prueba" aria-live="polite" hidden></div>';
 		echo '</div></article>';

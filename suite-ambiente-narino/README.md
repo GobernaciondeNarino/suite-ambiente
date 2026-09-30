@@ -87,9 +87,9 @@ Cada gráfico muestra al pie la fuente, su licencia y la hora de la última actu
 ## Avisos importantes
 
 - **Volcanes (SGC):** el Servicio Geológico Colombiano bloquea el acceso automatizado a su archivo de volcanes (HTTP 403). El plugin no evade ese bloqueo por defecto, y la visualización de volcanes muestra «fuente no disponible». Existe un modo de acceso «como navegador» que **solo debe activarse con autorización del SGC**.
-- **Open-Meteo:** el plan gratuito es para **uso no comercial** y tiene un límite de 10 000 llamadas al día; el plugin consume unas 4 000 a 4 500 con la configuración por defecto. **No vacíe la caché de Open-Meteo varias veces seguidas**: puede recibir HTTP 429. Si ocurre, el plugin sigue mostrando la última copia guardada.
+- **Open-Meteo:** el plan gratuito es para **uso no comercial** y tiene límites de 10 000 llamadas al día, 5 000 por hora y 300 000 al mes. Con la configuración por defecto el plugin usa unas 4 200 al día, y hasta unas 6 000 si los visitantes consultan los 64 municipios. El consumo real se ve en **Configuración → Tablero → Cupo gratuito de Open-Meteo** y con `wp suite-ambiente consumo`. Si la Gobernación contrata un plan comercial, basta con pegar la llave en la ficha de cada fuente de Open-Meteo. **No vacíe la caché de Open-Meteo varias veces seguidas**: puede recibir HTTP 429. Si ocurre, el plugin sigue mostrando la última copia guardada.
 - **IDEAM:** los datos se cargan en datos.gov.co una vez al día, con datos hasta el día anterior.
-- **WP-Cron:** en producción conviene ejecutar WP-Cron desde el cron del servidor. Ver [docs/arquitectura.md](../docs/arquitectura.md).
+- **WP-Cron:** en producción conviene desactivarlo y ejecutarlo desde el cron del servidor. El plugin trae comandos WP-CLI para eso (`wp suite-ambiente sincronizar`, `verificar`, `estado`, `consumo`, `mantenimiento`, `vaciar-cache`). Ver [docs/despliegue.md](../docs/despliegue.md).
 
 ## Identidad visual
 
@@ -106,6 +106,7 @@ Al **eliminar** el plugin desde WordPress (no solo desactivarlo) se borran sus t
 
 ## Documentación
 
+- [Despliegue en producción](../docs/despliegue.md)
 - [Arquitectura y extensión](../docs/arquitectura.md)
 - [Catálogo de visualizaciones y shortcodes](../docs/catalogo-visualizaciones.md)
 - [Investigación de APIs](../docs/investigacion-apis.md) y [anexo de public-apis](../docs/anexo-public-apis.md)

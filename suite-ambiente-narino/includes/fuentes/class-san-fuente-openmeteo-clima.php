@@ -40,10 +40,6 @@ final class SAN_Fuente_Openmeteo_Clima extends SAN_Fuente_Openmeteo {
 		return 'Temperatura, lluvia, humedad, viento, índice UV y estado del tiempo actuales y pronosticados (hasta 16 días) para las cabeceras de los 64 municipios.';
 	}
 
-	/** @return string[] */
-	public function hosts() {
-		return array( 'api.open-meteo.com' );
-	}
 
 	/** @return string */
 	public function atribucion() {
@@ -133,7 +129,7 @@ final class SAN_Fuente_Openmeteo_Clima extends SAN_Fuente_Openmeteo {
 				'forecast_hours' => 168,
 			)
 		);
-		return $this->get_cacheado( 'pronostico:' . $divipola . ':' . (int) $this->param( 'dias', 10 ), $url );
+		return $this->get_cacheado( 'pronostico:' . $divipola . ':' . (int) $this->param( 'dias', 10 ), $url, array(), $this->ttl_municipio() );
 	}
 
 	/** @return array */

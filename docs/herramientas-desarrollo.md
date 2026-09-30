@@ -46,7 +46,9 @@ Chrome DevTools MCP necesita Chrome o Chromium en la máquina. Para las pruebas 
 **En GitHub.** El flujo `.github/workflows/claude-security-review.yml` revisa el diff de cada *pull request* y comenta los hallazgos. Para activarlo:
 
 1. Cree el secreto `ANTHROPIC_API_KEY` en *Settings → Secrets and variables → Actions*.
-2. Active *Require approval for all external contributors* en *Settings → Actions*. La acción no está protegida contra inyección de instrucciones en PR de terceros.
+2. Active *Require approval for all external contributors* en *Settings → Actions → General*. La acción no está protegida contra inyección de instrucciones en PR de terceros.
+
+La revisión corre en cada PR abierto desde una rama del propio repositorio, con un límite de 30 minutos. En los PR que vienen de *forks* se omite, porque GitHub no les entrega el secreto; revíselos con `/security-review`.
 
 Las instrucciones adicionales para WordPress (`.github/security/instrucciones-wordpress.txt`) piden revisar nonces y capacidades, escape de salida, SQL preparado, SSRF en las llamadas a APIs, manejo de llaves e inyección de fórmulas en CSV. Se excluyen `.claude/skills` y `docs`.
 

@@ -19,6 +19,8 @@ Repositorio del plugin de WordPress **Suite Ambiente Nariño**, un observatorio 
 | [Catálogo de visualizaciones](docs/catalogo-visualizaciones.md) | Las 47 visualizaciones, sus tipos de gráfico, los shortcodes y los recursos de datos abiertos. |
 | [D3plus v4](docs/d3plus-v4.md) | Qué cambió en la versión 4, cómo la usa el plugin y problemas resueltos. |
 | [Arquitectura](docs/arquitectura.md) | Flujo de datos, almacenamiento, API REST, seguridad y puntos de extensión. |
+| [Despliegue en producción](docs/despliegue.md) | Cron del servidor, comandos WP-CLI, MAP_KEY de NASA FIRMS, hosts de salida y monitoreo. |
+| [Consulta a Open-Meteo](docs/consulta-open-meteo.md) | Correo listo para confirmar el uso no comercial, con el consumo medido. |
 | [Herramientas de desarrollo](docs/herramientas-desarrollo.md) | Repomix, skills de Anthropic, Chrome DevTools MCP, revisión de seguridad, graphify y Apple Design Skill. |
 
 ## Desarrollo
@@ -27,7 +29,7 @@ El plugin no necesita compilación. Las herramientas de desarrollo son opcionale
 
 ```bash
 bash scripts/setup-dev.sh   # instala Repomix (npm) y graphify (Python)
-npm test                    # php -l + pruebas unitarias (45)
+npm test                    # php -l + pruebas unitarias (59)
 npm run pack:plugin         # empaqueta el plugin para análisis con IA (Repomix)
 npm run graph               # actualiza el grafo de conocimiento (graphify)
 ```

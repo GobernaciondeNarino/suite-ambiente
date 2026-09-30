@@ -5,7 +5,9 @@
  * devuelven un arreglo con un objeto por coordenada, en el mismo orden.
  *
  * Licencia CC BY 4.0: la atribución es obligatoria. El uso gratuito es no
- * comercial (≤ 10 000 llamadas/día; cada coordenada cuenta como una).
+ * comercial (< 10 000 llamadas/día; cada coordenada cuenta como una; ver
+ * SAN_Consumo). Con una llave de un plan comercial, las consultas van al
+ * host `customer-…` equivalente con el parámetro `apikey`.
  *
  * @package SuiteAmbienteNarino
  */
@@ -16,9 +18,58 @@ defined( 'ABSPATH' ) || exit;
 
 abstract class SAN_Fuente_Openmeteo extends SAN_Fuente {
 
+	/**
+	 * Caché mínima (min) de las consultas por municipio. Los pronósticos se
+	 * recalculan cada 1 a 6 horas; con 3 h, aunque los visitantes recorran
+	 * los 64 municipios cada hora, el consumo queda lejos del cupo diario.
+	 */
+	const TTL_MUNICIPIO = 180;
+
+	/**
+	 * TTL de una consulta por municipio.
+	 *
+	 * @return int Minutos.
+	 */
+	protected function ttl_municipio() {
+		return max( self::TTL_MUNICIPIO, (int) $this->config()['ttl'] );
+	}
+
 	/** @return string */
 	public function licencia() {
 		return 'CC BY 4.0';
+	}
+
+	/**
+	 * Host del plan gratuito y su equivalente comercial.
+	 *
+	 * @return string[]
+	 */
+	public function hosts() {
+		$host = (string) wp_parse_url( static::BASE, PHP_URL_HOST );
+		return array( $host, 'customer-' . $host );
+	}
+
+	/**
+	 * Llave opcional: solo para un plan comercial de Open-Meteo.
+	 *
+	 * @return bool
+	 */
+	public function admite_clave() {
+		return true;
+	}
+
+	/** @return string */
+	public function url_clave() {
+		return 'https://open-meteo.com/en/pricing';
+	}
+
+	/** @return array */
+	public function texto_clave() {
+		return array(
+			'etiqueta' => 'Llave de plan comercial (opcional)',
+			'enlace'   => 'Ver planes de Open-Meteo',
+			'ayuda'    => 'Déjela vacía para usar el plan gratuito no comercial. Con una llave, el plugin consulta el servidor comercial (customer-…open-meteo.com).',
+		);
 	}
 
 	/**
@@ -51,6 +102,12 @@ abstract class SAN_Fuente_Openmeteo extends SAN_Fuente {
 	 */
 	protected function url( $base, array $params ) {
 		$params['timezone'] = $params['timezone'] ?? 'America/Bogota';
+		$clave              = (string) ( $this->config()['clave'] ?? '' );
+		if ( '' !== $clave ) {
+			$host             = (string) wp_parse_url( $base, PHP_URL_HOST );
+			$base             = preg_replace( '#^https://' . preg_quote( $host, '#' ) . '/#', 'https://customer-' . $host . '/', $base );
+			$params['apikey'] = $clave;
+		}
 		// add_query_arg codifica los valores; las comas se conservan legibles.
 		return str_replace( '%2C', ',', add_query_arg( array_map( 'rawurlencode', $params ), $base ) );
 	}

@@ -587,16 +587,31 @@
 		}
 		var r = this.resp;
 		var partes = [];
-		if ( r.fuente && r.fuente.atribucion && CFG.atribucion ) {
-			partes.push( ( T.fuente || 'Fuente' ) + ': ' + r.fuente.atribucion );
-		}
 		if ( r.actualizado ) {
 			partes.push( ( T.actualizado || 'Actualizado' ) + ': ' + SAN.fecha( new Date( r.actualizado.replace( ' ', 'T' ) + 'Z' ), true ) );
 		}
 		if ( r.nota ) {
 			partes.push( r.nota );
 		}
-		this.pie.textContent = partes.join( ' · ' );
+		this.pie.textContent = '';
+		// Atribución con enlace a la fuente (exigido por CC BY y CC BY-SA).
+		if ( r.fuente && r.fuente.atribucion && CFG.atribucion ) {
+			this.pie.appendChild( document.createTextNode( ( T.fuente || 'Fuente' ) + ': ' ) );
+			if ( r.fuente.url_doc && /^https:\/\//.test( r.fuente.url_doc ) ) {
+				var a = document.createElement( 'a' );
+				a.href = r.fuente.url_doc;
+				a.rel = 'noopener';
+				a.target = '_blank';
+				a.textContent = r.fuente.atribucion;
+				this.pie.appendChild( a );
+			} else {
+				this.pie.appendChild( document.createTextNode( r.fuente.atribucion ) );
+			}
+			if ( partes.length ) {
+				this.pie.appendChild( document.createTextNode( ' · ' ) );
+			}
+		}
+		this.pie.appendChild( document.createTextNode( partes.join( ' · ' ) ) );
 		if ( r.vencido ) {
 			var v = document.createElement( 'strong' );
 			v.className = 'san-vencido';

@@ -53,10 +53,6 @@ final class SAN_Fuente_Openmeteo_Marino extends SAN_Fuente_Openmeteo {
 		return 'Altura, periodo y dirección del oleaje y temperatura superficial del mar frente a Tumaco y Sanquianga, con pronóstico a 7 días.';
 	}
 
-	/** @return string[] */
-	public function hosts() {
-		return array( 'marine-api.open-meteo.com' );
-	}
 
 	/** @return string */
 	public function atribucion() {

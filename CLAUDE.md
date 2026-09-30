@@ -24,6 +24,7 @@ Plugin de WordPress (PHP 7.4+, JavaScript sin build) de observación ambiental p
 
 - `npm test`: `php -l` y pruebas unitarias (`tests/run.php`).
 - `node tests/e2e/navegador.mjs <url> <salida> <rutas…>` y `node tests/e2e/admin.mjs <url> <salida>`: pruebas en Chromium contra un WordPress con el plugin activo.
+- `wp suite-ambiente verificar|estado|consumo|sincronizar` (WP-CLI) contra el WordPress de pruebas. El consumo de Open-Meteo se mide con `SAN_Consumo`; no lo reinicie ni vacíe cachés en bucle.
 - Si cambia el catálogo de visualizaciones o de datos abiertos, actualice `docs/catalogo-visualizaciones.md`.
 
 ## graphify

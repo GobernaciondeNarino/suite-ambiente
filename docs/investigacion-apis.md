@@ -75,8 +75,23 @@ Una fuente nueva se agrega con una clase `SAN_Fuente_*` registrada con el filtro
 
 **Open-Meteo: cupo gratuito y uso no comercial.**
 
-- El plan gratuito permite 600 llamadas por minuto, 5 000 por hora y 10 000 por día, y es para **uso no comercial**. Un portal institucional sin publicidad parece encajar, pero conviene confirmarlo con Open-Meteo. Si no encaja, existe un plan comercial con llave.
-- Cada ubicación de una consulta por lotes cuenta como una llamada, y las consultas con más de 10 variables cuentan como fracciones adicionales. Con la configuración por defecto (caché de 60 min y sincronización horaria), el consumo estimado es de **4 000 a 4 500 llamadas al día**: ≈ 2 500 del clima de 64 municipios, ≈ 1 500 del aire, y el resto en pronósticos por municipio, caudales y océano. Es una estimación, no una medición.
+- El plan gratuito permite menos de 600 llamadas por minuto, 5 000 por hora, 10 000 por día y 300 000 al mes, y es para **uso no comercial**. Los términos citan como no comerciales los sitios «privados o sin ánimo de lucro, sin suscripciones ni publicidad» y la «investigación pública en instituciones públicas»; no mencionan portales de gobierno. La consulta para confirmarlo está redactada en [consulta-open-meteo.md](consulta-open-meteo.md). Si no encaja, el plugin acepta la llave de un plan comercial (host `customer-…open-meteo.com`) sin más cambios.
+- Cada ubicación de una consulta por lotes cuenta como una llamada. Una consulta con más de 10 variables o más de 2 semanas de datos cuenta como varias, de forma fraccionaria (15 variables = 1,5; 4 semanas = 2). Fuente: <https://open-meteo.com/en/pricing>.
+- **Consumo medido** con el contador del plugin (`SAN_Consumo`) en un ciclo completo de las 47 visualizaciones, el 2026-09-30: **189 llamadas equivalentes**, repartidas así:
+
+  | Fuente | Llamadas por ciclo | Caché | Llamadas al día |
+  |---|---|---|---|
+  | Clima: lote de 64 municipios (16 variables) | 102,4 | 60 min | ≈ 2 460 |
+  | Clima: pronóstico de un municipio (22 variables) | 2,2 | 180 min | ≈ 18 |
+  | Aire: lote de 64 municipios | 64,0 | 60 min | ≈ 1 540 |
+  | Aire: serie de un municipio | 1,4 | 180 min | ≈ 11 |
+  | Caudal de ríos (4 puntos, 60 días) | 17,1 | 360 min | ≈ 68 |
+  | Océano | 2,0 | 120 min | ≈ 24 |
+  | Verificación horaria de las 4 fuentes | 4,0 | cada hora | 96 |
+  | **Total con la configuración por defecto** | | | **≈ 4 200** |
+
+- **Peor caso:** si los visitantes consultan los otros 63 municipios en cada ventana de caché, se suman unas 1 800 llamadas al día (63 × 3,6 × 8), para un total cercano a **6 000**. Por eso las consultas por municipio tienen una caché mínima de 3 horas (`SAN_Fuente_Openmeteo::TTL_MUNICIPIO`). Sin esa caché, el peor caso rozaba el límite de 10 000.
+- El consumo real queda registrado por hora y por día en **Configuración → Tablero → Cupo gratuito de Open-Meteo** y con `wp suite-ambiente consumo`.
 - Durante las pruebas se recibió **HTTP 429** después de vaciar la caché varias veces seguidas (cada recarga de los 64 municipios son 64 llamadas). En producción esto se mitiga porque el plugin sirve la última copia en caché cuando la fuente falla (*stale-if-error*) y marca el dato como vencido. **No vacíe la caché de Open-Meteo repetidamente.**
 
 **IDEAM.** La carga en datos.gov.co es diaria (≈ 01:15 hora de Colombia) con datos hasta el día anterior. El nombre del departamento cambió de `NARIÑO` a `Nariño` en julio de 2026; por eso el filtro usa `upper()`. El *app token* de Socrata es opcional y solo sube el límite de peticiones.

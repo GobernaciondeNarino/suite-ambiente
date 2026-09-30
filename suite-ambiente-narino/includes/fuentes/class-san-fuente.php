@@ -79,6 +79,19 @@ abstract class SAN_Fuente {
 	}
 
 	/**
+	 * Textos del campo de clave en el panel.
+	 *
+	 * @return array { etiqueta, enlace, ayuda }
+	 */
+	public function texto_clave() {
+		return array(
+			'etiqueta' => $this->requiere_clave() ? 'Clave de API' : 'Clave de API (opcional)',
+			'enlace'   => 'Obtener una clave gratuita',
+			'ayuda'    => '',
+		);
+	}
+
+	/**
 	 * URL donde se obtiene la clave (si aplica).
 	 *
 	 * @return string

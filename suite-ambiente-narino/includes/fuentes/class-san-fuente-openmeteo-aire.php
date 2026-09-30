@@ -44,10 +44,6 @@ final class SAN_Fuente_Openmeteo_Aire extends SAN_Fuente_Openmeteo {
 		return 'Material particulado PM2.5 y PM10, ozono, dióxido de nitrógeno, dióxido de azufre, monóxido de carbono e índice UV estimados por el modelo CAMS de Copernicus, con pronóstico a 5 días.';
 	}
 
-	/** @return string[] */
-	public function hosts() {
-		return array( 'air-quality-api.open-meteo.com' );
-	}
 
 	/** @return string */
 	public function atribucion() {
@@ -124,7 +120,7 @@ final class SAN_Fuente_Openmeteo_Aire extends SAN_Fuente_Openmeteo {
 				'forecast_days' => 5,
 			)
 		);
-		return $this->get_cacheado( 'serie:' . $divipola, $url );
+		return $this->get_cacheado( 'serie:' . $divipola, $url, array(), $this->ttl_municipio() );
 	}
 
 	/** @return array */

@@ -67,10 +67,6 @@ final class SAN_Fuente_Openmeteo_Hidro extends SAN_Fuente_Openmeteo {
 		return 'Caudal diario simulado de los ríos Patía, Mira y Guáitara con el sistema global de alerta de inundaciones GloFAS, desde hace 30 días hasta 30 días de pronóstico, con su media y percentiles de referencia.';
 	}
 
-	/** @return string[] */
-	public function hosts() {
-		return array( 'flood-api.open-meteo.com' );
-	}
 
 	/** @return string */
 	public function atribucion() {

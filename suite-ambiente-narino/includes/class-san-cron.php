@@ -14,9 +14,10 @@ defined( 'ABSPATH' ) || exit;
 
 final class SAN_Cron {
 
-	const SYNC  = 'san_sincronizar';
-	const MANT  = 'san_mantenimiento';
-	const SALUD = 'san_salud';
+	const SYNC   = 'san_sincronizar';
+	const MANT   = 'san_mantenimiento';
+	const SALUD  = 'san_salud';
+	const ULTIMA = 'san_ultima_sincronizacion';
 
 	/**
 	 * Registra los manejadores.
@@ -47,7 +48,9 @@ final class SAN_Cron {
 	}
 
 	/**
-	 * Sincronización horaria.
+	 * Sincronización horaria (WP-Cron o `wp suite-ambiente sincronizar`).
+	 *
+	 * @return array { listas, errores, ms }
 	 */
 	public static function sincronizar() {
 		$inicio = microtime( true );
@@ -64,12 +67,28 @@ final class SAN_Cron {
 				++$fall;
 			}
 		}
+		$ms = (int) round( ( microtime( true ) - $inicio ) * 1000 );
+		update_option( self::ULTIMA, time(), false );
 		SAN_Logger::info(
 			'sistema',
 			'sincronizacion',
 			sprintf( 'Sincronización: %d visualizaciones listas, %d con error.', $ok, $fall ),
-			array( 'duracion_ms' => (int) round( ( microtime( true ) - $inicio ) * 1000 ) )
+			array( 'duracion_ms' => $ms )
 		);
+		return array(
+			'listas'  => $ok,
+			'errores' => $fall,
+			'ms'      => $ms,
+		);
+	}
+
+	/**
+	 * Marca de tiempo de la última sincronización completa (0 si nunca).
+	 *
+	 * @return int
+	 */
+	public static function ultima_sincronizacion() {
+		return (int) get_option( self::ULTIMA, 0 );
 	}
 
 	/**

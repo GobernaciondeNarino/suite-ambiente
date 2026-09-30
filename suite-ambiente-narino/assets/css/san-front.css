@@ -221,6 +221,12 @@
 	display: none;
 }
 
+.san-grafico__pie a {
+	color: var(--san-verde-texto);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
 .san-cargando {
 	align-items: center;
 	background: var(--san-plano);

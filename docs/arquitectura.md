@@ -90,6 +90,8 @@ Los GeoJSON siguen RFC 7946, que usa el sentido de giro contrario al que espera 
 | `san_fuentes` | opción | Configuración por fuente: activa, TTL, tiempo de espera, parámetros y llave cifrada. |
 | `san_salud` | opción | Últimas 20 verificaciones de cada fuente. |
 | `san_db_version` | opción | Versión del esquema de tablas. |
+| `san_consumo` | opción | Cupo de Open-Meteo usado, por minuto, hora y día (UTC), por fuente, y respuestas 429 (`SAN_Consumo`). |
+| `san_ultima_sincronizacion` | opción | Marca de tiempo de la última sincronización completa. |
 
 ## Tareas programadas
 
@@ -98,7 +100,30 @@ Los GeoJSON siguen RFC 7946, que usa el sentido de giro contrario al que espera 
 | `san_sincronizar` | cada hora | Verifica todas las fuentes y precalienta la caché de las visualizaciones del tablero. |
 | `san_mantenimiento` | diaria | Purga los registros más antiguos que la retención configurada (30 días por defecto) y la caché vencida hace más de 7 días (la reciente se conserva como respaldo ante fallos). |
 
-WP-Cron depende de las visitas al sitio. En producción conviene desactivarlo en `wp-config.php` (`define( 'DISABLE_WP_CRON', true );`) y llamarlo desde el cron del servidor cada 5 a 15 minutos.
+WP-Cron depende de las visitas al sitio. En producción conviene desactivarlo en `wp-config.php` (`define( 'DISABLE_WP_CRON', true );`) y llamarlo desde el cron del servidor cada 5 a 15 minutos (ver [despliegue.md](despliegue.md)).
+
+## Comandos WP-CLI
+
+`SAN_Cli` registra `wp suite-ambiente` con estos subcomandos:
+
+| Subcomando | Qué hace |
+|---|---|
+| `sincronizar` | Lo mismo que el evento horario: verifica las fuentes y precalienta la caché del tablero. |
+| `mantenimiento` | Lo mismo que el evento diario. |
+| `verificar [--fuente=<id>] [--estricto]` | Prueba en vivo las fuentes; con `--estricto` termina con código 1 si alguna falla. |
+| `estado` | Última y próxima sincronización, cupo de Open-Meteo y estado de cada fuente. |
+| `consumo` | Cupo de Open-Meteo usado por día (últimos 30 días). |
+| `vaciar-cache [--fuente=<id>]` | Vacía la caché. |
+
+## Cupo de Open-Meteo
+
+`SAN_Http` avisa a `SAN_Consumo` de cada respuesta correcta y de cada HTTP 429. Solo cuentan las de hosts de Open-Meteo. `SAN_Consumo::peso()` aplica las reglas publicadas por Open-Meteo:
+
+```text
+llamadas = coordenadas × max( 1, variables / 10 ) × max( 1, días / 14 )
+```
+
+Los totales se muestran en **Configuración → Tablero** y en la ficha de cada fuente. Las consultas por municipio tienen una caché mínima de 3 horas (`SAN_Fuente_Openmeteo::TTL_MUNICIPIO`) para acotar el peor caso. Con una llave comercial, `SAN_Fuente_Openmeteo::url()` cambia al host `customer-…` y agrega `apikey`, que se redacta en los registros.
 
 ## API REST
 

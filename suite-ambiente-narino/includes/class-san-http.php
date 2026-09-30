@@ -78,8 +78,15 @@ final class SAN_Http {
 					'extracto'    => substr( wp_strip_all_tags( $cuerpo ), 0, 300 ),
 				)
 			);
+			if ( 429 === $codigo ) {
+				SAN_Consumo::registrar_rechazo( $url );
+			}
 			return self::resultado( false, $codigo, null, 'HTTP ' . $codigo, $ms, $bytes );
 		}
+
+		// Cupo de Open-Meteo: cuenta toda respuesta correcta, aunque el cuerpo
+		// no sea válido, porque el servicio ya la contabilizó.
+		SAN_Consumo::registrar( $fuente, $url );
 
 		$datos = $cuerpo;
 		if ( 'json' === $formato ) {

@@ -15,7 +15,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}san_logs" );
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_san\\_%' OR option_name LIKE '\\_transient\\_timeout\\_san\\_%'" );
 // phpcs:enable
 
-foreach ( array( 'san_ajustes', 'san_fuentes', 'san_salud', 'san_db_version' ) as $opcion ) {
+foreach ( array( 'san_ajustes', 'san_fuentes', 'san_salud', 'san_db_version', 'san_consumo', 'san_ultima_sincronizacion' ) as $opcion ) {
 	delete_option( $opcion );
 }
 

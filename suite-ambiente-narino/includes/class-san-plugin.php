@@ -55,6 +55,10 @@ final class SAN_Plugin {
 		if ( is_admin() ) {
 			$this->admin = new SAN_Admin();
 		}
+
+		if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( '\\WP_CLI' ) ) {
+			\WP_CLI::add_command( 'suite-ambiente', SAN_Cli::class );
+		}
 	}
 
 	/**

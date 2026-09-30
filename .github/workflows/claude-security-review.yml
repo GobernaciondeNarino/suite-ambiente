@@ -3,6 +3,8 @@
 # Requiere el secreto ANTHROPIC_API_KEY en Settings → Secrets and variables → Actions.
 # La acción no está endurecida contra prompt injection: activa en el repositorio
 # "Require approval for all external contributors" para PR de forks.
+# GitHub no entrega secretos a los PR que vienen de forks; en ellos el trabajo
+# se omite (en lugar de fallar) y la revisión se hace localmente con /security-review.
 name: Revisión de seguridad (Claude)
 
 on:
@@ -14,7 +16,9 @@ permissions:
 
 jobs:
   security-review:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4

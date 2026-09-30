@@ -93,6 +93,15 @@ final class SAN_Fuente_Firms extends SAN_Fuente {
 		return 'https://firms.modaps.eosdis.nasa.gov/api/map_key/';
 	}
 
+	/** @return array */
+	public function texto_clave() {
+		return array(
+			'etiqueta' => 'MAP_KEY de NASA FIRMS (opcional)',
+			'enlace'   => 'Solicitar una MAP_KEY gratuita (llega al correo)',
+			'ayuda'    => 'Con la MAP_KEY el plugin consulta solo el área de Nariño (API por área) en lugar del CSV de toda Sudamérica. Límite de FIRMS: 5 000 transacciones cada 10 minutos. Si la API por área falla, se usa el CSV público.',
+		);
+	}
+
 	/** @return string */
 	public function frecuencia() {
 		return 'Cada paso de satélite (≈ 3 h de latencia)';
@@ -159,50 +168,57 @@ final class SAN_Fuente_Firms extends SAN_Fuente {
 		$ventana = (string) $this->param( 'ventana', '7d' );
 		$s       = self::SENSORES[ $sensor ] ?? self::SENSORES['noaa20'];
 		$clave   = (string) $this->config()['clave'];
-		$b = SAN_Municipios::BBOX;
+		$b       = SAN_Municipios::BBOX;
+		$publico = self::HOST . sprintf( $s['publico'], $ventana );
+
+		$procesar = function ( $csv ) use ( $s ) {
+			if ( ! is_string( $csv ) || false === strpos( $csv, 'latitude' ) ) {
+				return null;
+			}
+			$out = array();
+			foreach ( SAN_Fuente::csv_a_filas( $csv ) as $f ) {
+				$lat = (float) ( $f['latitude'] ?? 0 );
+				$lon = (float) ( $f['longitude'] ?? 0 );
+				$div = SAN_Geo::municipio_de( $lat, $lon );
+				if ( '' === $div ) {
+					continue;
+				}
+				$hhmm  = str_pad( (string) ( $f['acq_time'] ?? '0' ), 4, '0', STR_PAD_LEFT );
+				$out[] = array(
+					'fecha'      => (string) ( $f['acq_date'] ?? '' ),
+					'hora_utc'   => substr( $hhmm, 0, 2 ) . ':' . substr( $hhmm, 2, 2 ),
+					'lat'        => round( $lat, 4 ),
+					'lon'        => round( $lon, 4 ),
+					'frp'        => isset( $f['frp'] ) ? (float) $f['frp'] : null,
+					'confianza'  => (string) ( $f['confidence'] ?? '' ),
+					'dia_noche'  => 'N' === ( $f['daynight'] ?? '' ) ? 'Noche' : 'Día',
+					'satelite'   => $s['nombre'],
+					'divipola'   => $div,
+					'municipio'  => SAN_Municipios::nombre( $div ),
+					'subregion'  => SAN_Municipios::por_divipola( $div )['subregion'] ?? '',
+				);
+			}
+			return $out;
+		};
+
 		if ( '' !== $clave ) {
 			$url = self::HOST . 'api/area/csv/' . rawurlencode( $clave ) . '/' . $s['api'] . '/' . $b['oeste'] . ',' . $b['sur'] . ',' . $b['este'] . ',' . $b['norte'] . '/' . ( '24h' === $ventana ? 1 : 5 );
-		} else {
-			$url = self::HOST . sprintf( $s['publico'], $ventana );
+			$r   = $this->get_procesado( 'focos:' . $sensor . ':' . $ventana . ':api', $url, $procesar, array( 'formato' => 'texto' ) );
+			if ( ! empty( $r['ok'] ) ) {
+				return $r;
+			}
+			// MAP_KEY inválida, vencida o sin transacciones: respaldo con el CSV público.
+			SAN_Logger::advertencia( $this->id(), 'map_key', 'La API por área no respondió (' . ( $r['error'] ?? '' ) . '); se usa el CSV público de Sudamérica.' );
 		}
-		return $this->get_procesado(
-			'focos:' . $sensor . ':' . $ventana . ':' . ( '' !== $clave ? 'api' : 'pub' ),
-			$url,
-			function ( $csv ) use ( $s ) {
-				if ( ! is_string( $csv ) || false === strpos( $csv, 'latitude' ) ) {
-					return null;
-				}
-				$out = array();
-				foreach ( SAN_Fuente::csv_a_filas( $csv ) as $f ) {
-					$lat = (float) ( $f['latitude'] ?? 0 );
-					$lon = (float) ( $f['longitude'] ?? 0 );
-					$div = SAN_Geo::municipio_de( $lat, $lon );
-					if ( '' === $div ) {
-						continue;
-					}
-					$hhmm  = str_pad( (string) ( $f['acq_time'] ?? '0' ), 4, '0', STR_PAD_LEFT );
-					$out[] = array(
-						'fecha'      => (string) ( $f['acq_date'] ?? '' ),
-						'hora_utc'   => substr( $hhmm, 0, 2 ) . ':' . substr( $hhmm, 2, 2 ),
-						'lat'        => round( $lat, 4 ),
-						'lon'        => round( $lon, 4 ),
-						'frp'        => isset( $f['frp'] ) ? (float) $f['frp'] : null,
-						'confianza'  => (string) ( $f['confidence'] ?? '' ),
-						'dia_noche'  => 'N' === ( $f['daynight'] ?? '' ) ? 'Noche' : 'Día',
-						'satelite'   => $s['nombre'],
-						'divipola'   => $div,
-						'municipio'  => SAN_Municipios::nombre( $div ),
-						'subregion'  => SAN_Municipios::por_divipola( $div )['subregion'] ?? '',
-					);
-				}
-				return $out;
-			},
-			array( 'formato' => 'texto' )
-		);
+		return $this->get_procesado( 'focos:' . $sensor . ':' . $ventana . ':pub', $publico, $procesar, array( 'formato' => 'texto' ) );
 	}
 
 	/** @return array */
 	public function probar() {
+		$clave = (string) $this->config()['clave'];
+		if ( '' !== $clave ) {
+			return $this->probar_clave( $clave );
+		}
 		$h  = SAN_Http::get( $this->id(), self::HOST . sprintf( self::SENSORES['noaa20']['publico'], '24h' ), array( 'formato' => 'texto', 'timeout' => (int) $this->config()['timeout'] ) );
 		$ok = $h['ok'] && is_string( $h['datos'] ) && false !== strpos( $h['datos'], 'latitude' );
 		$n  = 0;
@@ -223,5 +239,29 @@ final class SAN_Fuente_Firms extends SAN_Fuente {
 			$ul ? $ul . ' UTC' : '',
 			array()
 		);
+	}
+
+	/**
+	 * Verifica la MAP_KEY con el servicio de estado de FIRMS.
+	 *
+	 * @param string $clave MAP_KEY.
+	 * @return array
+	 */
+	private function probar_clave( $clave ) {
+		$h = SAN_Http::get( $this->id(), self::HOST . 'mapserver/mapkey_status/?MAP_KEY=' . rawurlencode( $clave ), array( 'timeout' => (int) $this->config()['timeout'] ) );
+		if ( ! $h['ok'] ) {
+			$h['error'] = in_array( (int) $h['codigo'], array( 400, 401, 403 ), true )
+				? 'MAP_KEY inválida o sin transacciones disponibles (HTTP ' . $h['codigo'] . '). Mientras tanto se usa el CSV público.'
+				: $h['error'];
+			return $this->resultado_prueba( $h, false, '' );
+		}
+		$d       = is_array( $h['datos'] ) ? $h['datos'] : array();
+		$usadas  = $d['current_transactions'] ?? null;
+		$limite  = $d['transaction_limit'] ?? null;
+		$ventana = (string) ( $d['transaction_interval'] ?? '' );
+		$mensaje = null !== $usadas && null !== $limite
+			? sprintf( 'MAP_KEY válida: %1$s de %2$s transacciones usadas%3$s.', SAN_Analisis::num( (float) $usadas, 0 ), SAN_Analisis::num( (float) $limite, 0 ), '' !== $ventana ? ' (ventana de ' . $ventana . ')' : '' )
+			: 'MAP_KEY válida.';
+		return $this->resultado_prueba( $h, true, $mensaje, '', array() );
 	}
 }

@@ -40,5 +40,28 @@ function remove_accents( $s ) {
 	return strtr( $s, array( 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n' ) );
 }
 
+function wp_parse_url( $url, $componente = -1 ) {
+	return parse_url( $url, $componente );
+}
+function wp_parse_str( $cadena, &$salida ) {
+	parse_str( (string) $cadena, $salida );
+}
+function add_query_arg( $args, $url ) {
+	return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 );
+}
+// Opciones en memoria.
+$GLOBALS['san_opciones_prueba'] = array();
+function get_option( $nombre, $defecto = false ) {
+	return array_key_exists( $nombre, $GLOBALS['san_opciones_prueba'] ) ? $GLOBALS['san_opciones_prueba'][ $nombre ] : $defecto;
+}
+function update_option( $nombre, $valor, $autoload = null ) {
+	$GLOBALS['san_opciones_prueba'][ $nombre ] = $valor;
+	return true;
+}
+function delete_option( $nombre ) {
+	unset( $GLOBALS['san_opciones_prueba'][ $nombre ] );
+	return true;
+}
+
 require SAN_DIR . 'includes/class-san-autoload.php';
 \GobernacionNarino\SuiteAmbiente\SAN_Autoload::registrar();
