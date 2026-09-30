@@ -26,7 +26,7 @@ Esta guía sirve para instalar Suite Ambiente Nariño en el servidor de la Gober
 | Open-Meteo · Océano Pacífico | `marine-api.open-meteo.com`, `customer-marine-api.open-meteo.com` |
 | IDEAM · Estaciones automáticas (datos.gov.co) | `www.datos.gov.co` |
 | Servicio Geológico Colombiano · Sismos | `api.sgc.gov.co` |
-| Servicio Geológico Colombiano · Volcanes | `archive.sgc.gov.co` |
+| Servicio Geológico Colombiano · Volcanes | `www2.sgc.gov.co` |
 | USGS · Sismicidad regional | `earthquake.usgs.gov` |
 | GDACS · Alertas de desastres | `www.gdacs.org` |
 | NASA FIRMS · Focos de calor | `firms.modaps.eosdis.nasa.gov` |
@@ -105,7 +105,7 @@ MAILTO="soporte-tic@ejemplo.gov.co"
 5 7 * * * /usr/local/bin/wp --path=/var/www/html suite-ambiente verificar --estricto > /dev/null 2>&1 || /usr/local/bin/wp --path=/var/www/html suite-ambiente estado
 ```
 
-Una fuente que se sabe bloqueada haría fallar este monitoreo todos los días. Desactívela en **Configuración → APIs** mientras siga así. Hoy es el caso de SGC · Volcanes, que responde HTTP 403 a clientes automatizados; ver la sección 6.
+Si una fuente queda bloqueada o fuera de servicio por un tiempo largo, desactívela en **Configuración → APIs** mientras siga así; si no, este monitoreo fallaría todos los días.
 
 Para una página pública de estado, inserte el shortcode `[san_estado_apis]`.
 
@@ -130,7 +130,7 @@ Sin llave, el plugin descarga el CSV público de focos de toda Sudamérica y lo 
 | Fuente | Situación | Qué hacer |
 |---|---|---|
 | Open-Meteo | Plan gratuito solo para uso no comercial; menos de 10 000 llamadas al día. El plugin usa unas 4 200 al día y, en el peor caso, unas 6 000. | Enviar la consulta de [consulta-open-meteo.md](consulta-open-meteo.md). Vigilar el medidor de **Configuración → Tablero** o `wp suite-ambiente consumo`. Si contratan un plan, pegar la llave en las cuatro fuentes de Open-Meteo. |
-| SGC · Volcanes | `volcanos.json` responde HTTP 403 a clientes automatizados. El plugin no evade el bloqueo. | Pedir al SGC un servicio de datos abiertos o una autorización escrita; solo entonces activar el modo de acceso «navegador». Mientras tanto, desactivar la fuente o dejar el aviso público. |
+| SGC · Volcanes | El plugin usa la lista pública de boletines de `www2.sgc.gov.co`. Funciona, pero no está documentada como datos abiertos y puede cambiar. | Enviar la consulta de [consulta-sgc.md](consulta-sgc.md). Si la lista cambia, «Probar ahora» lo muestra en rojo y la visualización queda en «fuente no disponible». |
 | IDEAM | Los datos se cargan una vez al día en datos.gov.co. | Nada. Opcional: un *app token* de Socrata sube el límite de peticiones. |
 
 ## 7. Lista de verificación final
@@ -140,6 +140,6 @@ Sin llave, el plugin descarga el CSV público de focos de toda Sudamérica y lo 
 - [ ] MAP_KEY de FIRMS configurada y «Probar ahora» en verde.
 - [ ] Monitoreo por correo programado (sección 4).
 - [ ] Consulta a Open-Meteo enviada y registrada en [consulta-open-meteo.md](consulta-open-meteo.md).
-- [ ] SGC · Volcanes desactivada o con autorización del SGC.
+- [ ] Consulta al SGC sobre la lista de boletines enviada y registrada en [consulta-sgc.md](consulta-sgc.md).
 - [ ] Salida HTTPS a los hosts de la sección 1.
 - [ ] Copia de seguridad de la base de datos y de `wp-config.php`, que contiene las sales que cifran las llaves.

@@ -23,7 +23,7 @@ Cada fuente es una clase `SAN_Fuente_*` en `suite-ambiente-narino/includes/fuent
 | `ideam` | IDEAM · Estaciones automáticas (datos.gov.co) | Red de estaciones IDEAM | www.datos.gov.co | Diaria (carga ≈ 01:15 hora de Colombia) | 180 min | no (app token opcional) | CC BY-SA 4.0 |
 | `openmeteo_marino` | Open-Meteo · Océano Pacífico | Océano Pacífico | marine-api.open-meteo.com | Cada hora (oleaje cada 6–12 h) | 120 min | no | CC BY 4.0 |
 | `sgc_sismos` | Servicio Geológico Colombiano · Sismos | Sismos y volcanes | api.sgc.gov.co | Continua (≈ 30 min de retraso) | 15 min | no | Información pública (Ley 1712 de 2014) |
-| `sgc_volcanes` | Servicio Geológico Colombiano · Volcanes | Sismos y volcanes | archive.sgc.gov.co | Al cambiar el nivel y con cada boletín semanal | 60 min | no | Información pública (Ley 1712 de 2014) |
+| `sgc_volcanes` | Servicio Geológico Colombiano · Volcanes | Sismos y volcanes | www2.sgc.gov.co | Boletín semanal (martes) y extraordinarios el mismo día | 60 min | no | Información pública (Ley 1712 de 2014) |
 | `usgs` | USGS · Sismicidad regional | Sismos y volcanes | earthquake.usgs.gov | Continua (≈ 1 min) | 30 min | no | Dominio público (USGS) |
 | `gdacs` | GDACS · Alertas de desastres | Eventos naturales | www.gdacs.org | Continua | 120 min | no | Uso con atribución |
 | `firms` | NASA FIRMS · Focos de calor | Incendios y focos de calor | firms.modaps.eosdis.nasa.gov | Cada paso de satélite (≈ 3 h de latencia) | 60 min | opcional (MAP_KEY) | Datos abiertos NASA (con cita) |
@@ -41,7 +41,7 @@ Cada fuente es una clase `SAN_Fuente_*` en `suite-ambiente-narino/includes/fuent
 | IDEAM | SoQL agregado por día y estación sobre cuatro conjuntos: precipitación `s54a-sgyg`, temperatura `sbwg-7ju4`, humedad `uext-mhny` y nivel de río `bdmn-sqnh`. Filtra con `upper(departamento)='NARIÑO'` (ver Parte II). | `dias` (7), `app_token` (vacío) |
 | Open-Meteo Océano | Punto frente a Tumaco (1.85, −78.85) o frente a Sanquianga (2.55, −78.55). | `punto` (tumaco) |
 | SGC Sismos | Catálogo quincenal nacional; el plugin recorta al polígono de Nariño más un margen y asigna el municipio por punto en polígono. | `dias` (15), `margen` en grados (0.3) |
-| SGC Volcanes | Archivo `volcanos.json` con el nivel de actividad y los boletines del OVS Pasto. Ver la nota de acceso más abajo. | `acceso` (estandar) |
+| SGC Volcanes | Lista pública de boletines del Observatorio Vulcanológico y Sismológico de Pasto (API REST de SharePoint, solo con `$select`). El nivel sale del boletín semanal o extraordinario más reciente de cada volcán. Ver la nota más abajo. | — |
 | USGS | FDSN `query` con radio desde Pasto. | `radio_km` (400), `min_mag` (2.5), `dias` (365) |
 | GDACS | Eventos por país. | `paises` (Colombia;Ecuador) |
 | NASA FIRMS | Sin llave: CSV público de Sudamérica por sensor y ventana, recortado al polígono de Nariño. Con MAP_KEY: API por área. La llave se guarda cifrada (AES-256-GCM). | `sensor` (noaa20), `ventana` (7d) |
@@ -67,11 +67,16 @@ Una fuente nueva se agrega con una clase `SAN_Fuente_*` registrada con el filtro
 
 ### Notas operativas encontradas durante el desarrollo
 
-**SGC · Volcanes: el acceso automatizado está bloqueado.**
+**SGC · Volcanes: cambio de fuente.**
 
-- En las pruebas de la Parte II el archivo respondió 200. Durante el desarrollo del plugin empezó a responder **HTTP 403** a los clientes que no se identifican como navegador web. El bloqueo depende del User-Agent, no del Referer.
-- El plugin se identifica con su propio User-Agent (`SuiteAmbienteNarino/1.0 (+sitio)`) y **no evade el bloqueo por defecto**. Mientras el SGC mantenga la restricción, la visualización `volcanes_alerta` muestra un mensaje de fuente no disponible.
-- El parámetro `acceso` tiene una opción «Como navegador web (solo con autorización del SGC)». Debe activarse **solo después de acordarlo formalmente con el SGC**. Lo recomendable es que la Gobernación solicite al SGC un servicio de datos abiertos o una autorización expresa para este uso.
+- En las pruebas de la Parte II, el archivo `archive.sgc.gov.co/volcanos/volcanos.json` respondió 200. Horas después empezó a responder **HTTP 403** a los clientes que no se identifican como navegador web. El nuevo portal `www.sgc.gov.co` también rechaza el acceso automatizado. El plugin no evade esos bloqueos: se eliminó la opción de identificarse como navegador.
+- Se buscaron alternativas; los resultados están en la sección siguiente. La única fuente automatizada que da el **nivel oficial del SGC** es la lista pública «Boletines-Comunicados» de `www2.sgc.gov.co`: la misma que alimenta la página de boletines del SGC.
+  - Responde sin autenticación, en JSON, a un cliente que se identifica honestamente.
+  - `robots.txt` no restringe esa ruta.
+- **No está documentada como datos abiertos**, así que puede cambiar. El plugin la consulta cada hora con caché, valida la forma de la respuesta y pide solo los campos necesarios (`$select`), porque el registro completo trae datos de los funcionarios que publican. Conviene informar al SGC y pedir su aval o un servicio de datos abiertos; el correo está redactado en [consulta-sgc.md](consulta-sgc.md).
+- **Qué muestra el plugin:**
+  - Galeras, Cumbal, Chiles y Cerro Negro tienen boletín semanal con nivel.
+  - Azufral, Doña Juana y Las Ánimas solo aparecen en el boletín mensual del segmento sur, cuyo campo de nivel casi siempre es «NA». El plugin no inventa su nivel: los muestra en gris con el enlace al boletín.
 
 **Open-Meteo: cupo gratuito y uso no comercial.**
 
@@ -101,6 +106,28 @@ Una fuente nueva se agrega con una clase `SAN_Fuente_*` registrada con el filtro
 **GBIF.** Hubo un tiempo de espera de conexión transitorio. El tiempo de espera por defecto es de 25 s y el cliente HTTP reintenta una vez ante errores de red.
 
 **Atribución.** Cada gráfico muestra al pie la fuente, su licencia y la hora de actualización. La atribución se puede desactivar en Configuración → General, pero las licencias CC BY y CC BY-SA la exigen.
+
+### Investigación de APIs de volcanes (2026-09-30)
+
+Pruebas en vivo con un User-Agent honesto (`SuiteAmbienteNarino/1.0`), sin cookies ni Referer.
+
+| Candidato | Resultado | Veredicto |
+|---|---|---|
+| SGC `archive.sgc.gov.co/volcanos/volcanos.json` | 403 (bloqueo de acceso automatizado) | Descartado: no se evade |
+| SGC `www.sgc.gov.co/volcanes` | 403 de CloudFront («Request blocked») | Descartado: no se evade |
+| **SGC, lista «Boletines-Comunicados» (`www2.sgc.gov.co/Noticias/_api/...`)** | 200 · ≈ 1 s · JSON · CORS `*`. Trae título, tipo (semanal, mensual, extraordinario), fecha de emisión, **nivel de actividad**, volcanes y ruta al PDF. Último boletín: 2026-09-29 | **Adoptado** (API no documentada) |
+| SGC, capa ArcGIS `Volcanes_Colombia` (campo `Nivel_Acti`) | 200, pero es una carga única del 2026-08-12, desactualizada (Puracé en verde cuando estaba en amarilla o naranja) | Descartado para el nivel |
+| SGC, capa `srvags.sgc.gov.co` `Hosted/Volcanes` | 200 · nombre, tipo y coordenadas | Usado para las coordenadas oficiales |
+| SGC en datos.gov.co y Hub `datos.sgc.gov.co` | Solo capas geológicas y de amenaza estáticas | Descartado para el nivel |
+| Aviación: SIGMET internacionales de AWC (`aviationweather.gov/api/data/isigmet`) | 200 · JSON · dominio público. Avisos de **ceniza volcánica** vigentes (FIR Bogotá SKED y Guayaquil SEFG) | Complemento recomendado (no implementado) |
+| Aviación: avisos VAAC Washington (`tgftp.nws.noaa.gov/data/raw/fv/`) | 200 · texto TAC con nube de ceniza y pronóstico | Complemento (no implementado) |
+| Smithsonian GVP, reporte semanal (RSS) | 200 · semanal; solo trae volcanes con actividad notable y cita el nivel del SGC en texto libre | Complemento menor |
+| NASA EONET (volcanes) | Solo eventos de Galeras entre 2004 y 2014 | Descartado |
+| GDACS (volcanes) | Ningún evento en Colombia ni Ecuador desde 2011 | Descartado para volcanes |
+| IGEPN (Ecuador), MIROVA, MOUNTS, NASA SO₂ | Sin API reutilizable, o sin respuesta estable | Descartados |
+| USGS HANS | Solo volcanes de EE. UU. | Descartado |
+
+**Conclusión:** sin la lista de boletines del SGC, ninguna fuente entrega el nivel oficial de forma automatizada y legítima. Para la ceniza, la mejor fuente complementaria es la API de SIGMET de AWC, filtrada por ceniza (VA) y por las FIR de Bogotá y Guayaquil. Reventador (Ecuador) está a unos 130 km de Pasto.
 
 ## Parte II — Informe de pruebas en vivo (2026-09-30)
 
@@ -378,7 +405,7 @@ Leyenda:
   - `news[]`, `link`, `threat_map`.
 - **Advertencia:** en `geometry.coordinates` el orden es `[lat, lon]`, invertido. No envía CORS.
 - **Rutas que fallan:** `feed/v1.0.1/summary/*.json` y `volcanos/alert_leves.json` responden 403.
-- **Actualización posterior:** horas después, el propio `volcanos.json` empezó a responder 403 a clientes que no se identifican como navegador. Ver «Notas operativas» en la Parte I.
+- **Actualización posterior:** horas después, el propio `volcanos.json` empezó a responder 403 a clientes que no se identifican como navegador. El plugin pasó a la lista de boletines del SGC; ver «SGC · Volcanes: cambio de fuente» en la Parte I.
 
 #### 4.11 NASA EONET — ADOPT (complementario)
 - `https://eonet.gsfc.nasa.gov/api/v3/events?bbox=-79.05,2.70,-76.80,0.35&status=all&days=3650` responde 200 en 0.81 s con 2 inundaciones de fuente GDACS.

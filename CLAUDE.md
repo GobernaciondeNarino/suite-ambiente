@@ -17,7 +17,7 @@ Plugin de WordPress (PHP 7.4+, JavaScript sin build) de observación ambiental p
 - Visualizaciones: se declaran en las clases `SAN_Viz_*` de `includes/visualizaciones/`. El procesador devuelve `ok`, `datos`, `config` y `analisis`. Los tipos de gráfico deben ser compatibles con la forma de los datos (`SAN_Catalogo::FORMAS`).
 - Seguridad: escapar toda salida, validar ids contra el catálogo, `manage_options` + nonce en el panel y en las rutas `admin/*`, llaves de API cifradas y nunca enviadas al navegador ni a los registros.
 - D3plus v4: ver `docs/d3plus-v4.md` antes de tocar `assets/js/san-graficos.js`. Las propiedades de texto van como funciones, los objetos de ejes se crean nuevos para cada eje y la fuente se pasa como `"Nunito Sans", sans-serif` (nunca la pila completa con `-apple-system`).
-- No evadir bloqueos de las fuentes: el modo «navegador» de SGC Volcanes solo se activa con autorización del SGC.
+- No evadir bloqueos de las fuentes (nada de User-Agent de navegador, Referer ni cookies falsas). SGC Volcanes usa la lista pública de boletines de `www2.sgc.gov.co` (API no documentada): pídala siempre con `$select` de los campos necesarios, porque el registro completo trae datos de funcionarios.
 - Open-Meteo tiene cupo (10 000 llamadas al día, uso no comercial). No vacíe su caché en bucle durante las pruebas.
 
 ## Comprobaciones

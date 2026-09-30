@@ -15,6 +15,7 @@ use GobernacionNarino\SuiteAmbiente\SAN_Logger as L;
 use GobernacionNarino\SuiteAmbiente\SAN_Datos_Abiertos as D;
 use GobernacionNarino\SuiteAmbiente\SAN_Catalogo as C;
 use GobernacionNarino\SuiteAmbiente\SAN_Consumo as K;
+use GobernacionNarino\SuiteAmbiente\SAN_Fuente_Sgc_Volcanes as V;
 
 $fallos = 0;
 $total  = 0;
@@ -125,6 +126,25 @@ prueba( 'La llave no aparece en los registros', false === strpos( L::redactar_ur
 update_option( 'san_fuentes', array() );
 $u = $url->invoke( $om, 'https://api.open-meteo.com/v1/forecast', array( 'latitude' => '1.2' ) );
 prueba( 'Sin llave usa el plan gratuito', 0 === strpos( $u, 'https://api.open-meteo.com/' ) && false === strpos( $u, 'apikey' ) );
+
+// Volcanes: lista de boletines del SGC (más reciente primero).
+$zw = "\u{200B}";
+$boletines = array(
+	array( 'Title' => 'Boletín semanal de actividad del volcán Galeras del 22 al 28 de septiembre', 'Emision' => '2026-09-29T23:00:00Z', 'Tipo_x002d_comunicado' => 'Boletín semanal', 'Nivel_x0020_de_x0020_actividad' => 'Amarilla', 'Volc_x00e1_n' => array( 'Volcán Galeras' ), 'FileRef' => '/Noticias/boletinesDocumentos/Boletin_galeras.pdf' ),
+	array( 'Title' => 'Boletín semanal Chiles Cerro Negro', 'Emision' => '2026-09-29T23:00:00Z', 'Tipo_x002d_comunicado' => 'Boletín semanal', 'Nivel_x0020_de_x0020_actividad' => 'Amarillo', 'Volc_x00e1_n' => array( 'Volcán Cerro Negro', 'Volcán Chiles' ), 'FileRef' => '/Noticias/boletinesDocumentos/Boletin_chiles.pdf' ),
+	array( 'Title' => 'Boletín mensual segmento sur', 'Emision' => '2026-08-20T20:00:00Z', 'Tipo_x002d_comunicado' => 'Boletín mensual', 'Nivel_x0020_de_x0020_actividad' => 'Verde', 'Volc_x00e1_n' => array( 'Volcán Azufral', 'Volcán Galeras', 'Volcán Las Ánimas', 'Volcán Doña Juana', 'Co' . $zw . $zw . 'mplejo volcánico' . $zw . ' Chiles - Cerro' . $zw . ' Negro (CVCCN)' ), 'FileRef' => '/Noticias/boletinesDocumentos/Boletin_mensual.pdf' ),
+	array( 'Title' => 'Boletín semanal Galeras (anterior)', 'Emision' => '2026-09-22T22:00:00Z', 'Tipo_x002d_comunicado' => 'Boletín semanal', 'Nivel_x0020_de_x0020_actividad' => 'Verde', 'Volc_x00e1_n' => array( 'Volcán Galeras' ), 'FileRef' => '/Noticias/boletinesDocumentos/viejo.pdf' ),
+	array( 'Title' => 'Ruta sospechosa', 'Emision' => '2026-09-01T00:00:00Z', 'Tipo_x002d_comunicado' => 'Boletín semanal', 'Nivel_x0020_de_x0020_actividad' => 'Roja', 'Volc_x00e1_n' => array( 'Volcán Cumbal' ), 'FileRef' => '/Noticias/../../etc/passwd' ),
+);
+$ev = array_column( V::estado_volcanes( $boletines ), null, 'volcan' );
+prueba( 'Volcanes: 7 volcanes de Nariño', 7 === count( $ev ) );
+prueba( 'Volcanes: Galeras toma el boletín semanal más reciente (Amarilla)', 3 === $ev['Galeras']['nivel_codigo'] && '2026-09-29' === $ev['Galeras']['boletin_fecha'] );
+prueba( 'Volcanes: el par Chiles–Cerro Negro y la variante «Amarillo»', 3 === $ev['Chiles']['nivel_codigo'] && 3 === $ev['Cerro Negro de Mayasquer']['nivel_codigo'] );
+prueba( 'Volcanes: el boletín mensual no fija nivel, pero sí el enlace', 0 === $ev['Azufral']['nivel_codigo'] && false !== strpos( $ev['Azufral']['boletin_url'], 'Boletin_mensual.pdf' ) );
+prueba( 'Volcanes: nombre con espacios de ancho cero y tildes', array( 'chiles', 'cerro_negro' ) === V::claves_volcan( 'Co' . $zw . 'mplejo volcánico Chiles - Cerro' . $zw . ' Negro' ) && array( 'las_animas' ) === V::claves_volcan( 'Volcán Las Ánimas' ) );
+prueba( 'Volcanes: rechaza rutas de PDF fuera de la biblioteca', '' === $ev['Cumbal']['boletin_url'] && '' === V::url_boletin( 'https://otro.sitio/x.pdf' ) );
+prueba( 'Volcanes: orden por severidad (Roja primero), sin dato al final', 'Cumbal' === V::estado_volcanes( $boletines )[0]['volcan'] && 1 === V::estado_volcanes( $boletines )[0]['nivel_codigo'] && 0 === end( $ev )['nivel_codigo'] );
+prueba( 'Volcanes: códigos de nivel', 4 === V::codigo_nivel( 'Verde' ) && 2 === V::codigo_nivel( 'NARANJA' ) && 1 === V::codigo_nivel( 'Roja' ) && 0 === V::codigo_nivel( 'NA' ) && 0 === V::codigo_nivel( null ) );
 
 echo PHP_EOL . ( $total - $fallos ) . '/' . $total . ' pruebas correctas' . PHP_EOL;
 exit( $fallos ? 1 : 0 );

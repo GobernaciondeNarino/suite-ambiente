@@ -37,9 +37,12 @@ function wp_unslash( $v ) {
 	return $v;
 }
 function remove_accents( $s ) {
-	return strtr( $s, array( 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n' ) );
+	return strtr( $s, array( 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n', 'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N' ) );
 }
 
+function esc_url_raw( $url ) {
+	return filter_var( $url, FILTER_VALIDATE_URL ) ? $url : '';
+}
 function wp_parse_url( $url, $componente = -1 ) {
 	return parse_url( $url, $componente );
 }

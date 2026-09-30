@@ -70,8 +70,8 @@ final class SAN_Viz_Sismos extends SAN_Viz {
 				'titulo'      => 'Nivel de alerta de los volcanes',
 				'fuente'      => 'sgc_volcanes',
 				'subgrupo'    => 'Volcanes',
-				'descripcion' => 'Nivel de actividad vigente declarado por el Servicio Geológico Colombiano para los volcanes que influyen en Nariño.',
-				'lectura'     => 'Verde: activo en reposo. Amarilla: cambios en el comportamiento. Naranja: erupción probable en días o semanas. Roja: erupción inminente o en curso.',
+				'descripcion' => 'Nivel de actividad de los volcanes de Nariño según el último boletín del Observatorio Vulcanológico y Sismológico de Pasto del Servicio Geológico Colombiano.',
+				'lectura'     => 'Verde: activo en reposo. Amarilla: cambios en el comportamiento. Naranja: erupción probable en días o semanas. Roja: erupción inminente o en curso. Gris: el volcán solo aparece en el boletín mensual, que no trae el nivel en la lista; consulte el boletín.',
 				'tipo'        => 'puntos',
 				'tipos'       => array( 'puntos', 'barh' ),
 				'procesador'  => array( $c, 'volcanes' ),
@@ -135,13 +135,14 @@ final class SAN_Viz_Sismos extends SAN_Viz {
 				'formatos'    => array( 'json', 'csv', 'geojson' ),
 				'campos'      => array(
 					'volcan'         => 'Nombre',
-					'nivel_codigo'   => 'Código de nivel (4 verde … 1 roja)',
-					'nivel'          => 'Nivel de alerta',
-					'descripcion'    => 'Descripción corta',
+					'nivel_codigo'   => 'Código de nivel (4 verde … 1 roja; 0 sin nivel en la lista)',
+					'nivel'          => 'Nivel de actividad',
+					'descripcion'    => 'Descripción oficial del nivel',
 					'lat'            => 'Latitud',
 					'lon'            => 'Longitud',
-					'altitud'        => 'Altitud',
-					'boletin_fecha'  => 'Fecha del último boletín',
+					'boletin_fecha'  => 'Fecha del boletín (UTC)',
+					'boletin_tipo'   => 'Tipo de boletín',
+					'boletin_nombre' => 'Título del boletín',
 					'boletin_url'    => 'Enlace al boletín (PDF)',
 				),
 				'generador'   => array( __CLASS__, 'gen_volcanes' ),
@@ -440,65 +441,84 @@ final class SAN_Viz_Sismos extends SAN_Viz {
 	public static function volcanes() {
 		$r = SAN_Fuentes::obtener( 'sgc_volcanes' )->volcanes();
 		if ( ! $r['ok'] ) {
-			if ( false !== strpos( (string) $r['error'], '403' ) ) {
-				return array(
-					'ok'    => false,
-					'error' => 'El Servicio Geológico Colombiano restringe el acceso automatizado a los niveles de alerta volcánica. Consulte el estado oficial en sgc.gov.co/volcanes; el administrador puede habilitar el acceso en Configuración → APIs tras acordarlo con el SGC.',
-				);
-			}
 			return SAN_Catalogo::fallo( $r );
 		}
 		$filas     = (array) $r['datos'];
 		$amarillos = array_filter(
 			$filas,
 			function ( $f ) {
-				return $f['nivel_codigo'] <= 3;
+				return $f['nivel_codigo'] >= 1 && $f['nivel_codigo'] <= 3;
+			}
+		);
+		$verdes    = array_filter(
+			$filas,
+			function ( $f ) {
+				return 4 === $f['nivel_codigo'];
+			}
+		);
+		$sin_nivel = array_filter(
+			$filas,
+			function ( $f ) {
+				return 0 === $f['nivel_codigo'];
 			}
 		);
 		$peor      = $filas ? $filas[0] : null;
-		$n         = $peor ? ( SAN_Fuente_Sgc_Volcanes::NIVELES[ $peor['nivel_codigo'] ] ?? SAN_Fuente_Sgc_Volcanes::NIVELES[4] ) : null;
+		$n         = $peor ? ( SAN_Fuente_Sgc_Volcanes::NIVELES[ $peor['nivel_codigo'] ] ?? SAN_Fuente_Sgc_Volcanes::NIVELES[0] ) : null;
 		$leyenda   = array();
-		foreach ( array_reverse( SAN_Fuente_Sgc_Volcanes::NIVELES, true ) as $cod => $nv ) {
+		foreach ( array( 4, 3, 2, 1, 0 ) as $cod ) {
 			$leyenda[] = array(
-				'color' => $nv['color'],
-				'texto' => $nv['nombre'],
+				'color' => SAN_Fuente_Sgc_Volcanes::NIVELES[ $cod ]['color'],
+				'texto' => SAN_Fuente_Sgc_Volcanes::NIVELES[ $cod ]['nombre'],
 			);
 		}
+		// Tamaño por severidad sobre una escala fija (verde y sin dato 1,5 … roja 4).
 		foreach ( $filas as &$f ) {
-			$f['tam'] = 5 - $f['nivel_codigo'];
+			$f['tam'] = $f['nivel_codigo'] && $f['nivel_codigo'] < 4 ? 5 - $f['nivel_codigo'] : 1.5;
 		}
 		unset( $f );
 		return self::ok(
 			$filas,
 			array(
-				'lat'         => 'lat',
-				'lon'         => 'lon',
-				'tamano'      => 'tam',
-				'color_campo' => 'color',
-				'etiqueta'    => 'volcan',
+				'lat'             => 'lat',
+				'lon'             => 'lon',
+				'tamano'          => 'tam',
+				'tamano_dominio'  => array( 1, 4 ),
+				'color_campo'     => 'color',
+				'etiqueta'        => 'volcan',
 				'ajustar_a_datos' => true,
-				'x'           => 'volcan',
-				'y'           => 'valor',
-				'leyenda'     => $leyenda,
-				'tooltip'     => array( array( 'Nivel', 'nivel' ), array( 'Estado', 'descripcion' ), array( 'Último boletín', 'boletin_fecha' ) ),
+				'x'               => 'volcan',
+				'y'               => 'valor',
+				'leyenda'         => $leyenda,
+				'tooltip'         => array( array( 'Nivel', 'nivel' ), array( 'Estado', 'descripcion' ), array( 'Boletín', 'boletin_tipo' ), array( 'Fecha', 'boletin_fecha' ) ),
 			),
 			array(
 				'nivel'                => $n ? $n['nivel'] : 'info',
-				'titular'              => $amarillos ? sprintf( '%d volcanes en alerta amarilla o superior: %s.', count( $amarillos ), implode( ', ', array_column( $amarillos, 'volcan' ) ) ) : 'Todos los volcanes de Nariño están en nivel verde (activo en reposo).',
-				'cualitativo'          => array_map(
-					function ( $f ) {
-						return sprintf( '%s — %s. %s%s', $f['volcan'], $f['nivel'], $f['descripcion'], $f['boletin_fecha'] ? ' Último boletín: ' . $f['boletin_fecha'] . '.' : '' );
-					},
-					array_slice( $filas, 0, 6 )
+				'titular'              => $amarillos
+					? sprintf( '%d volcanes en alerta amarilla o superior: %s.', count( $amarillos ), implode( ', ', array_column( $amarillos, 'volcan' ) ) )
+					: ( $verdes ? 'Ningún volcán de Nariño está en alerta amarilla o superior según los últimos boletines semanales.' : 'Los boletines recientes no informan el nivel de los volcanes; consulte los boletines del SGC.' ),
+				'cualitativo'          => array_merge(
+					array_map(
+						function ( $f ) {
+							return sprintf( '%s — %s. %s%s', $f['volcan'], $f['nivel'], $f['descripcion'], $f['boletin_fecha'] ? ' ' . $f['boletin_tipo'] . ' del ' . $f['boletin_fecha'] . '.' : '' );
+						},
+						array_values( array_filter(
+							$filas,
+							function ( $f ) {
+								return $f['nivel_codigo'] > 0;
+							}
+						) )
+					),
+					$sin_nivel ? array( sprintf( '%s solo aparecen en el boletín mensual del segmento sur, que no trae el nivel en la lista de boletines; consulte el PDF enlazado.', implode( ', ', array_column( $sin_nivel, 'volcan' ) ) ) ) : array()
 				),
 				'recomendaciones'      => $amarillos ? array( 'Seguir únicamente la información oficial del SGC y de los consejos de gestión del riesgo; no ingresar a las zonas de amenaza alta.', 'Conocer las rutas de evacuación del mapa de amenaza de cada volcán.' ) : array(),
 				'cuantitativo'         => array(
 					self::cifra( 'Volcanes vigilados', (string) count( $filas ) ),
 					self::cifra( 'En amarilla o más', (string) count( $amarillos ) ),
-					self::cifra( 'En verde', (string) ( count( $filas ) - count( $amarillos ) ) ),
+					self::cifra( 'En verde', (string) count( $verdes ) ),
+					self::cifra( 'Sin nivel en la lista', (string) count( $sin_nivel ) ),
 				),
 				'resumen_cuantitativo' => 'Niveles del SGC: 4 verde, 3 amarilla, 2 naranja, 1 roja.',
-				'metodo'               => 'Archivo volcanos.json del Servicio Geológico Colombiano; se listan los volcanes cuyo departamento incluye Nariño.',
+				'metodo'               => 'Lista pública de boletines del SGC (Observatorio Vulcanológico y Sismológico de Pasto). El nivel de cada volcán se toma de su boletín semanal o extraordinario más reciente; los boletines mensuales, que agrupan varios volcanes, solo aportan el enlace.',
 			),
 			$r
 		);

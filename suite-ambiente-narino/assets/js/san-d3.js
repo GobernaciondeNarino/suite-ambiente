@@ -208,7 +208,9 @@
 			base.svg.append( 'g' ).attr( 'pointer-events', 'none' ).selectAll( 'path' ).data( contorno ).join( 'path' )
 				.attr( 'd', path ).attr( 'fill', 'none' ).attr( 'stroke', tk.tinta2 ).attr( 'stroke-width', 1.2 );
 
-			var tam = cfg.tamano ? d3.scaleSqrt().domain( d3.extent( datos, function ( d ) {
+			// Dominio fijo opcional (p. ej. niveles de alerta): el tamaño no
+			// depende de qué valores aparezcan en los datos del día.
+			var tam = cfg.tamano ? d3.scaleSqrt().domain( cfg.tamano_dominio || d3.extent( datos, function ( d ) {
 				return numero( d[ cfg.tamano ] );
 			} ) ).range( [ 4, 18 ] ) : function () {
 				return 6;
